@@ -6,6 +6,7 @@ except ImportError:
 import os
 import json
 import base64
+import litellm
 import platformdirs
 from tenacity import (
     retry,
@@ -46,22 +47,6 @@ class ChatOpenAI(EngineLM, CachedEngine):
 
         self.system_prompt = system_prompt
         self.base_url = base_url
-        
-        if not base_url:
-            if os.getenv("OPENAI_API_KEY") is None:
-                raise ValueError("Please set the OPENAI_API_KEY environment variable if you'd like to use OpenAI models.")
-            
-            self.client = OpenAI(
-                api_key=os.getenv("OPENAI_API_KEY")
-            )
-        elif base_url and base_url == OLLAMA_BASE_URL:
-            self.client = OpenAI(
-                base_url=base_url,
-                api_key="ollama"
-            )
-        else:
-            raise ValueError("Invalid base URL provided. Please use the default OLLAMA base URL or None.")
-
         self.model_string = model_string
         self.is_multimodal = is_multimodal
 
@@ -87,7 +72,7 @@ class ChatOpenAI(EngineLM, CachedEngine):
         if cache_or_none is not None:
             return cache_or_none
 
-        response = self.client.chat.completions.create(
+        response = litellm.completion(
             model=self.model_string,
             messages=[
                 {"role": "system", "content": sys_prompt_arg},
@@ -143,7 +128,7 @@ class ChatOpenAI(EngineLM, CachedEngine):
         if cache_or_none is not None:
             return cache_or_none
 
-        response = self.client.chat.completions.create(
+        response = litellm.completion(
             model=self.model_string,
             messages=[
                 {"role": "system", "content": sys_prompt_arg},
